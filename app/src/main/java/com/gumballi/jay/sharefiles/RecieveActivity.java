@@ -31,6 +31,7 @@ import java.io.InputStream;
 import java.io.ObjectInputStream;
 import java.io.OutputStream;
 import java.io.PushbackInputStream;
+import java.lang.ref.WeakReference;
 import java.lang.reflect.Method;
 import java.net.InetAddress;
 import java.net.InetSocketAddress;
@@ -57,6 +58,8 @@ public class RecieveActivity extends AppCompatActivity {
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_recieve);
+
+        Log.d("Reciever","first "+(serverSocket==null));
 
         try{
             serverSocket = new ServerSocket(8888);
@@ -93,34 +96,8 @@ public class RecieveActivity extends AppCompatActivity {
         intentFilter.addAction(WifiP2pManager.WIFI_P2P_STATE_CHANGED_ACTION);
         intentFilter.addAction(WifiP2pManager.WIFI_P2P_CONNECTION_CHANGED_ACTION);
 
-        registerReceiver(myBroadcastReciever,intentFilter);
 
-        deletePersistentGroups();
-        p2pManager.removeGroup(channel,null);
-
-        final Handler handler=new Handler();
-        handler.post(new Runnable() {
-            @Override
-            public void run() {
-               /* p2pManager.discoverPeers(channel, new WifiP2pManager.ActionListener() {
-                    @Override
-                    public void onSuccess() {
-                        Log.d("Reciever","Discovery Success");
-                        if(fileServerAsyncTask!=null) return;
-                        fileServerAsyncTask=new FileServerAsyncTask(getApplicationContext());
-                        fileServerAsyncTask.execute();
-                    }
-
-                    @Override
-                    public void onFailure(int reason) {
-                        Log.d("Reciever","Discovery Failure"+reason);
-                        //p2pManager.requestPeers(channel,null);
-                    }
-                });*/
-            }
-        });
-
-        p2pManager.createGroup(channel, new WifiP2pManager.ActionListener() {
+        /*p2pManager.createGroup(channel, new WifiP2pManager.ActionListener() {
             @Override
             public void onSuccess() {
                 Log.d("Reciever","Group Created");
@@ -129,49 +106,55 @@ public class RecieveActivity extends AppCompatActivity {
                     return;
                 }
                 fileServerAsyncTask=new FileServerAsyncTask(getApplicationContext());
-                //unregisterReceiver(myBroadcastReciever);
                 fileServerAsyncTask.execute();
-                Thread thread=new Thread(new Runnable() {
-                    @Override
-                    public void run() {
-                        fileServerAsyncTask.recieveData();
-                    }
-                });
-                //thread.start();
-                //fileServerAsyncTask.execute();
             }
 
             @Override
             public void onFailure(int reason) {
                 Log.d("Reciever","Group not Created"+reason);
             }
-        });
+        });*/
 
-        Handler handler1=new Handler();
-        handler1.post(new Runnable() {
+        Handler handler=new Handler();
+        handler.post(new Runnable() {
             @Override
             public void run() {
+                p2pManager.createGroup(channel, new WifiP2pManager.ActionListener() {
+                    @Override
+                    public void onSuccess() {
+                        Log.d("Reciever","Group Created");
+                        if(fileServerAsyncTask!=null){
+                            Log.d("Reciever","Woah!");
+                            return;
+                        }
+                        fileServerAsyncTask=new FileServerAsyncTask(new WeakReference<Context>(getApplicationContext()),new WeakReference<ServerSocket>(serverSocket));
+                        fileServerAsyncTask.execute();
+                    }
 
+                    @Override
+                    public void onFailure(int reason) {
+                        Log.d("Reciever","Group not Created"+reason);
+                    }
+                });
             }
         });
 
 
-
-
-
+        registerReceiver(myBroadcastReciever,intentFilter);
 
     }
 
-    public class FileServerAsyncTask extends AsyncTask<Void,Void,Void>{
+    public static class FileServerAsyncTask extends AsyncTask<Void,Void,Void>{
 
         private Context context;
         private String fileName;
-        //private ServerSocket serverSocket;
+        private ServerSocket serverSocket;
         private Socket client;
         private File file;
 
-        public FileServerAsyncTask(Context context) {
-            this.context = context;
+        public FileServerAsyncTask(WeakReference<Context> contextWeakReference,WeakReference<ServerSocket> reference) {
+            this.context = contextWeakReference.get();
+            this.serverSocket=reference.get();
         }
 
         public void recieveData(){
@@ -319,18 +302,36 @@ public class RecieveActivity extends AppCompatActivity {
         unregisterReceiver(myBroadcastReciever);
         p2pManager.cancelConnect(channel,null);
         p2pManager.stopPeerDiscovery(channel,null);
-        try {
-            serverSocket.close();
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
+            new Handler().post(new Runnable() {
+                @Override
+                public void run() {
+                    try {
+                        serverSocket.close();
+                    } catch (IOException e) {
+                        e.printStackTrace();
+                    }
+                }
+            });
+
         try{
             fileServerAsyncTask.cancel(true);
         }catch (Exception e){
             e.printStackTrace();
         }
-        //p2pManager.removeGroup(channel,null);
-        //deletePersistentGroups();
+        fileServerAsyncTask=null;
+        Log.d("Reciever","End Reached");
+        p2pManager.removeGroup(channel, new WifiP2pManager.ActionListener() {
+            @Override
+            public void onSuccess() {
+                Log.d("Reciever","Groups Removed");
+            }
+
+            @Override
+            public void onFailure(int reason) {
+                Log.d("Reciever","Groups Not Removed");
+            }
+        });
+        deletePersistentGroups();
     }
 
     private void deletePersistentGroups(){
