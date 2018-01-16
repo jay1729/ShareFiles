@@ -20,4 +20,5 @@ allprojects {
 
 task clean(type: Delete) {
     delete rootProject.buildDir
+    //compile "com.android.support:appcompat-v7:22.2.0"
 }

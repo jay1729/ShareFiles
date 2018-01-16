@@ -125,7 +125,7 @@ public class PeersActivity extends AppCompatActivity {
             }
         });
         //Toast.makeText(this,channel.toString(),Toast.LENGTH_LONG).show();
-        myBroadcastReciever=new MyBroadcastReciever(p2pManager,channel,this,infoListener);
+        myBroadcastReciever=new MyBroadcastReciever(p2pManager,channel,this,infoListener,null);
         myBroadcastReciever.setPeerListListener(peerListListener);
 
         intentFilter=new IntentFilter();

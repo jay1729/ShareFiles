@@ -53,11 +53,14 @@ public class RecieveActivity extends AppCompatActivity {
     public static FileServerAsyncTask fileServerAsyncTask;
     public static WifiP2pManager.ConnectionInfoListener infoListener;
     public ServerSocket serverSocket;
+    TextView deviceName;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_recieve);
+
+        deviceName=(TextView) findViewById(R.id.recieve_name);
 
         Log.d("Reciever","first "+(serverSocket==null));
 
@@ -76,6 +79,7 @@ public class RecieveActivity extends AppCompatActivity {
         Log.d("Reciever","onCreate");
 
         p2pManager=(WifiP2pManager) getSystemService(this.WIFI_P2P_SERVICE);
+
         channel=p2pManager.initialize(this, getMainLooper(), new WifiP2pManager.ChannelListener() {
             @Override
             public void onChannelDisconnected() {
@@ -88,7 +92,8 @@ public class RecieveActivity extends AppCompatActivity {
                 Log.d("Reciever","infoListener");
             }
         };
-        myBroadcastReciever=new MyBroadcastReciever(p2pManager,channel,this,null);
+
+        myBroadcastReciever=new MyBroadcastReciever(p2pManager,channel,this,null,deviceName);
 
         intentFilter=new IntentFilter();
         intentFilter.addAction(WifiP2pManager.WIFI_P2P_THIS_DEVICE_CHANGED_ACTION);
@@ -96,24 +101,20 @@ public class RecieveActivity extends AppCompatActivity {
         intentFilter.addAction(WifiP2pManager.WIFI_P2P_STATE_CHANGED_ACTION);
         intentFilter.addAction(WifiP2pManager.WIFI_P2P_CONNECTION_CHANGED_ACTION);
 
+        registerReceiver(myBroadcastReciever,intentFilter);
 
-        /*p2pManager.createGroup(channel, new WifiP2pManager.ActionListener() {
+        p2pManager.removeGroup(channel, new WifiP2pManager.ActionListener() {
             @Override
             public void onSuccess() {
-                Log.d("Reciever","Group Created");
-                if(fileServerAsyncTask!=null){
-                    Log.d("Reciever","Woah!");
-                    return;
-                }
-                fileServerAsyncTask=new FileServerAsyncTask(getApplicationContext());
-                fileServerAsyncTask.execute();
+                Log.d("Reciever","Groups Removed");
             }
 
             @Override
             public void onFailure(int reason) {
-                Log.d("Reciever","Group not Created"+reason);
+                Log.d("Reciever","Groups Not Removed");
             }
-        });*/
+        });
+        deletePersistentGroups();
 
         Handler handler=new Handler();
         handler.post(new Runnable() {
@@ -140,7 +141,6 @@ public class RecieveActivity extends AppCompatActivity {
         });
 
 
-        registerReceiver(myBroadcastReciever,intentFilter);
 
     }
 
@@ -170,6 +170,7 @@ public class RecieveActivity extends AppCompatActivity {
                 //serverSocket.setSoTimeout(1000000);
                 client=serverSocket.accept();
                 Log.d("Reciever","Server Connected");
+                if(isCancelled()) return;
 
                 InputStream inputStream1=client.getInputStream();
                 ObjectInputStream inputStream=new ObjectInputStream(inputStream1);
@@ -187,6 +188,7 @@ public class RecieveActivity extends AppCompatActivity {
                     while(((len=inputStream.read(buf))!=-1)){
                         //len=inputStream.read(buf);
                         outputStream.write(buf,0,len);
+                        if(this.isCancelled()) return;
                         Log.d("Reciever","Writing Data    -"+len);
                     }
                     Log.d("Reciever","Writing Data Final   -"+len);
@@ -215,46 +217,6 @@ public class RecieveActivity extends AppCompatActivity {
             recieveData();
             return null;
 
-            /*byte buf[]=new byte[1024];
-            int len;
-
-            try {
-                //serverSocket.bind(new InetSocketAddress(8888));
-                //serverSocket.bind(new InetSocketAddress("192.168.49.1",8888));
-                Log.d("Reciever","Server Listening");
-                Log.d("Reciever Address",serverSocket.getLocalSocketAddress().toString());
-                Log.d("Reciever Port",String.valueOf(serverSocket.getLocalPort()));
-                //serverSocket.setSoTimeout(1000000);
-                client=serverSocket.accept();
-                Log.d("Reciever","Server Connected");
-
-                InputStream inputStream1=client.getInputStream();
-                ObjectInputStream inputStream=new ObjectInputStream(inputStream1);
-                fileName=inputStream.readUTF();
-                file=new File(Environment.getExternalStorageDirectory()+"/"+context.getPackageName()+"/"+fileName);
-                Log.d("Reciever",file.getPath());
-                File dir=file.getParentFile();
-                if(!dir.exists()) dir.mkdirs();
-                if(file.exists()) file.delete();
-                if(file.createNewFile()){
-                    Log.d("Reciever","File Created");
-                }else Log.d("Reciever","File Not Created");
-                OutputStream outputStream=new FileOutputStream(file);
-               while(inputStream.available()>0){
-                   len=inputStream.read(buf);
-                   outputStream.write(buf,0,len);
-                   Log.d("Reciever","Writing Data");
-               }
-
-                outputStream.flush();
-                outputStream.close();
-                inputStream.close();
-
-            }catch (Exception e){
-                e.printStackTrace();
-            }
-
-            return null;*/
         }
 
         @Override
