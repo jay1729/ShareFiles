@@ -1,5 +1,6 @@
 package com.gumballi.jay.sharefiles;
 
+import android.app.AlertDialog;
 import android.content.Context;
 import android.content.IntentFilter;
 import android.net.wifi.p2p.WifiP2pConfig;
@@ -15,7 +16,11 @@ import android.support.annotation.RequiresApi;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
 import android.util.Log;
+import android.view.Menu;
+import android.view.MenuInflater;
+import android.view.MenuItem;
 import android.view.View;
+import android.view.ViewGroup;
 import android.widget.TextView;
 import android.widget.Toast;
 
@@ -144,6 +149,26 @@ public class RecieveActivity extends AppCompatActivity {
 
     }
 
+    @Override
+    public boolean onCreateOptionsMenu(Menu menu) {
+        super.onCreateOptionsMenu(menu);
+        MenuInflater inflater=getMenuInflater();
+        inflater.inflate(R.menu.menu_res,menu);
+        return true;
+    }
+
+    @Override
+    public boolean onOptionsItemSelected(MenuItem item) {
+        super.onOptionsItemSelected(item);
+        switch (item.getItemId()){
+            case(R.id.change_name):
+                Log.d("wololo","wololo");
+                DeviceUtil.changeDeviceName(RecieveActivity.this,p2pManager,channel,null);
+                return true;
+        }
+        return true;
+    }
+
     public static class FileServerAsyncTask extends AsyncTask<Void,Void,Void>{
 
         private Context context;
@@ -162,8 +187,6 @@ public class RecieveActivity extends AppCompatActivity {
             int len;
 
             try {
-                //serverSocket.bind(new InetSocketAddress(8888));
-                //serverSocket.bind(new InetSocketAddress("192.168.49.1",8888));
                 Log.d("Reciever","Server Listening");
                 Log.d("Reciever Address",serverSocket.getLocalSocketAddress().toString());
                 Log.d("Reciever Port",String.valueOf(serverSocket.getLocalPort()));

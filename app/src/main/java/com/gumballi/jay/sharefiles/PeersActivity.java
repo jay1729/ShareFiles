@@ -26,6 +26,9 @@ import android.os.Bundle;
 import android.support.v7.widget.LinearLayoutManager;
 import android.support.v7.widget.RecyclerView;
 import android.util.Log;
+import android.view.Menu;
+import android.view.MenuInflater;
+import android.view.MenuItem;
 import android.widget.Button;
 import android.widget.TextView;
 import android.widget.Toast;
@@ -49,19 +52,21 @@ public class PeersActivity extends AppCompatActivity {
     public WifiP2pManager.Channel channel;
     public IntentFilter intentFilter;
     public MyBroadcastReciever myBroadcastReciever;
-    public Button sendButton,recieveButton;
     public WifiP2pManager.PeerListListener peerListListener;
     public List<WifiP2pDevice> peerList;
     public PeersAdapter peersAdapter;
     public RecyclerView recyclerView;
     public InetAddress serverAddress;
     public WifiP2pManager.ConnectionInfoListener infoListener;
+    public TextView deviceName;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
 
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_peers);
+
+        deviceName=(TextView) findViewById(R.id.peers_name);
 
         /*if (android.os.Build.VERSION.SDK_INT > 9) {
             StrictMode.ThreadPolicy policy = new StrictMode.ThreadPolicy.Builder()
@@ -125,7 +130,7 @@ public class PeersActivity extends AppCompatActivity {
             }
         });
         //Toast.makeText(this,channel.toString(),Toast.LENGTH_LONG).show();
-        myBroadcastReciever=new MyBroadcastReciever(p2pManager,channel,this,infoListener,null);
+        myBroadcastReciever=new MyBroadcastReciever(p2pManager,channel,this,infoListener,deviceName);
         myBroadcastReciever.setPeerListListener(peerListListener);
 
         intentFilter=new IntentFilter();
@@ -174,6 +179,26 @@ public class PeersActivity extends AppCompatActivity {
                 }
         }
 
+    }
+
+    @Override
+    public boolean onCreateOptionsMenu(Menu menu) {
+        super.onCreateOptionsMenu(menu);
+        MenuInflater inflater=getMenuInflater();
+        inflater.inflate(R.menu.menu_res,menu);
+        return true;
+    }
+
+    @Override
+    public boolean onOptionsItemSelected(MenuItem item) {
+        super.onOptionsItemSelected(item);
+        switch (item.getItemId()){
+            case(R.id.change_name):
+                Log.d("wololo","wololo");
+                DeviceUtil.changeDeviceName(PeersActivity.this,p2pManager,channel,null);
+                return true;
+        }
+        return true;
     }
 
     @Override
