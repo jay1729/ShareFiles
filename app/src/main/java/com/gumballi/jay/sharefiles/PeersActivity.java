@@ -170,9 +170,10 @@ public class PeersActivity extends AppCompatActivity {
                 Uri uri=data.getData();
                 try{
                     String fileName=PathUtil.getPath(getApplicationContext(),uri);
+                    File file=new File(fileName);
                     fileName=getFileName(fileName);
                     Log.d("File Path",fileName);
-                    TransferData transferData=new TransferData(this,uri,fileName,serverAddress);
+                    TransferData transferData=new TransferData(this,file,fileName,serverAddress);
                     transferData.execute();
                 }catch (Exception e){
                     e.printStackTrace();

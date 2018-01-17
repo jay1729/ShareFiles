@@ -21,6 +21,7 @@ import android.view.MenuInflater;
 import android.view.MenuItem;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.ProgressBar;
 import android.widget.TextView;
 import android.widget.Toast;
 
@@ -48,6 +49,7 @@ import java.nio.channels.ByteChannel;
 import java.nio.channels.FileChannel;
 import java.nio.file.FileSystem;
 import java.nio.file.Files;
+import java.util.Calendar;
 
 public class RecieveActivity extends AppCompatActivity {
 
@@ -59,6 +61,8 @@ public class RecieveActivity extends AppCompatActivity {
     public static WifiP2pManager.ConnectionInfoListener infoListener;
     public ServerSocket serverSocket;
     TextView deviceName;
+    public ProgressBar progressBar;
+    public TextView fileName,date;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -66,6 +70,9 @@ public class RecieveActivity extends AppCompatActivity {
         setContentView(R.layout.activity_recieve);
 
         deviceName=(TextView) findViewById(R.id.recieve_name);
+        progressBar=(ProgressBar)findViewById(R.id.receiveProgressBar);
+        fileName=(TextView) findViewById(R.id.fileName);
+        date=(TextView) findViewById(R.id.dateAndTime);
 
         Log.d("Reciever","first "+(serverSocket==null));
 
@@ -133,7 +140,7 @@ public class RecieveActivity extends AppCompatActivity {
                             Log.d("Reciever","Woah!");
                             return;
                         }
-                        fileServerAsyncTask=new FileServerAsyncTask(new WeakReference<Context>(getApplicationContext()),new WeakReference<ServerSocket>(serverSocket));
+                        fileServerAsyncTask=new FileServerAsyncTask((getApplicationContext()),(serverSocket),(progressBar),(fileName),date);
                         fileServerAsyncTask.execute();
                     }
 
@@ -169,17 +176,23 @@ public class RecieveActivity extends AppCompatActivity {
         return true;
     }
 
-    public static class FileServerAsyncTask extends AsyncTask<Void,Void,Void>{
+    public static class FileServerAsyncTask extends AsyncTask<Void,CustomObject,Void>{
 
         private Context context;
         private String fileName;
         private ServerSocket serverSocket;
         private Socket client;
         private File file;
+        private Long fileSize;
+        private ProgressBar progressBar;
+        private TextView fileNameTW,date;
 
-        public FileServerAsyncTask(WeakReference<Context> contextWeakReference,WeakReference<ServerSocket> reference) {
-            this.context = contextWeakReference.get();
-            this.serverSocket=reference.get();
+        public FileServerAsyncTask(Context contextWeakReference,ServerSocket reference,ProgressBar progressBarWeakReference,TextView fileName,TextView date) {
+            this.context = contextWeakReference;
+            this.serverSocket=reference;
+            this.progressBar=progressBarWeakReference;
+            this.fileNameTW=fileName;
+            this.date=date;
         }
 
         public void recieveData(){
@@ -198,6 +211,7 @@ public class RecieveActivity extends AppCompatActivity {
                 InputStream inputStream1=client.getInputStream();
                 ObjectInputStream inputStream=new ObjectInputStream(inputStream1);
                 fileName=inputStream.readUTF();
+                fileSize=inputStream.readLong();
                 file=new File(Environment.getExternalStorageDirectory()+"/"+context.getPackageName()+"/"+fileName);
                 Log.d("Reciever",file.getPath());
                 File dir=file.getParentFile();
@@ -207,12 +221,23 @@ public class RecieveActivity extends AppCompatActivity {
                     Log.d("Reciever","File Created");
                 }else Log.d("Reciever","File Not Created");
                 OutputStream outputStream=new FileOutputStream(file);
+                CustomObject progress=new CustomObject();
+                progress.name=fileName;
+                progress.dataIncrement=0;
+                progress.totalProgress=0;
                 try{
                     while(((len=inputStream.read(buf))!=-1)){
                         //len=inputStream.read(buf);
                         outputStream.write(buf,0,len);
+                        progress.dataIncrement=Long.valueOf(len);
+                        if(((int)(progress.totalProgress*100/fileSize.longValue()))==((int)((progress.totalProgress+progress.dataIncrement)*100/fileSize.longValue()))){
+                            progress.totalProgress+=progress.dataIncrement;
+                            continue;
+                        }
+                        progress.totalProgress+=progress.dataIncrement;
+                        publishProgress(progress);
                         if(this.isCancelled()) return;
-                        Log.d("Reciever","Writing Data    -"+len);
+                        //Log.d("Reciever","Writing Data    -"+len);
                     }
                     Log.d("Reciever","Writing Data Final   -"+len);
                 }catch (Exception ee){
@@ -243,10 +268,21 @@ public class RecieveActivity extends AppCompatActivity {
         }
 
         @Override
+        protected void onProgressUpdate(CustomObject... values) {
+            super.onProgressUpdate(values);
+            if(fileNameTW.getText().equals("")) fileNameTW.setText(values[0].name);
+            progressBar.setProgress((int)((values[0].totalProgress*100)/fileSize.longValue()));
+        }
+
+        @Override
         protected void onPostExecute(Void aVoid) {
             super.onPostExecute(aVoid);
+            Calendar calendar=Calendar.getInstance();
+            date.setText(calendar.getTime().toString());
+            progressBar.setProgress(100);
             Toast.makeText(context,"File Transferred!",Toast.LENGTH_LONG).show();
             Log.d("Reciever","onPostExecute");
+            Log.d("Reciever",file.length()+" file size");
             try{
                 serverSocket.close();
                 client.close();

@@ -7,6 +7,7 @@ import android.os.AsyncTask;
 import android.util.Log;
 import android.widget.Toast;
 
+import java.io.File;
 import java.io.InputStream;
 import java.io.ObjectOutputStream;
 import java.io.OutputStream;
@@ -14,6 +15,7 @@ import java.net.InetAddress;
 import java.net.InetSocketAddress;
 import java.net.Socket;
 import java.net.SocketAddress;
+import java.net.URI;
 
 /**
  * Created by jay on 5/1/18.
@@ -24,10 +26,12 @@ public class TransferData extends AsyncTask<Void,Void,Void>{
     public Uri uri;
     public InetAddress serverAddress;
     public String fileName;
+    private File file;
 
-    public TransferData(Context context, Uri uri,String fileName, InetAddress serverAddress){
+    public TransferData(Context context, File file,String fileName, InetAddress serverAddress){
         this.context=context;
-        this.uri=uri;
+        this.uri=Uri.fromFile(file);
+        this.file=file;
         this.fileName=fileName;
         this.serverAddress=serverAddress;
         Toast.makeText(context,"Transfer Started",Toast.LENGTH_SHORT).show();
@@ -59,9 +63,12 @@ public class TransferData extends AsyncTask<Void,Void,Void>{
             ContentResolver cr = context.getContentResolver();
             InputStream inputStream=cr.openInputStream(uri);
             objectOutputStream.writeUTF(fileName);
+            objectOutputStream.writeLong(file.length());
+
+            Log.d("Sender",(file.length()+"  file size"));
             while ((len = inputStream.read(buf)) != -1) {
                 objectOutputStream.write(buf,0,len);
-                Log.d("Sender","Writing Data");
+                //Log.d("Sender","Writing Data");
             }
             //objectOutputStream.write(-1);
             inputStream.close();
