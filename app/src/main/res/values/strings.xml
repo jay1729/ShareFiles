@@ -4,4 +4,7 @@
     <string name="open_drawer">Open</string>
     <string name="close_drawer">Close</string>
     <string name="alert_dialog_title">Change Device Name</string>
+    <string name="send_activity_first_heading">My Device Name</string>
+    <string name="send_activity_second_heading">Available Devices</string>
+    <string name="receive_activity_second_heading">Current File Transfer</string>
 </resources>

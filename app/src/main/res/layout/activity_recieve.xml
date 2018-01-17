@@ -5,9 +5,19 @@
     android:gravity="center_horizontal"
     android:orientation="vertical">
 
+    <TextView
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="@string/send_activity_first_heading"
+        android:gravity="center_horizontal"
+        android:textSize="15dp"
+        android:background="@color/textBackColor"
+        android:textColor="@color/textColor"
+        />
+
     <View
         android:layout_width="match_parent"
-        android:layout_height="20dp"/>
+        android:layout_height="15dp"/>
 
     <TextView
         android:layout_width="wrap_content"
@@ -16,5 +26,23 @@
         android:text="My Device"
         android:textSize="20dp"
          />
+
+    <View
+        android:layout_width="match_parent"
+        android:layout_height="15dp"/>
+
+    <TextView
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="@string/receive_activity_second_heading"
+        android:gravity="center_horizontal"
+        android:textSize="15dp"
+        android:background="@color/textBackColor"
+        android:textColor="@color/textColor"
+        />
+
+    <View
+        android:layout_width="match_parent"
+        android:layout_height="15dp"/>
 
 </LinearLayout>
