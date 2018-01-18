@@ -25,6 +25,7 @@
         android:id="@+id/recieve_name"
         android:text="My Device"
         android:textSize="20dp"
+        android:textColor="@color/textColor"
          />
 
     <View
@@ -76,5 +77,20 @@
             style="@style/Widget.AppCompat.ProgressBar.Horizontal"/>
 
     </LinearLayout>
+
+    <TextView
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="@string/receive_activity_third_heading"
+        android:gravity="center_horizontal"
+        android:textSize="15dp"
+        android:background="@color/textBackColor"
+        android:textColor="@color/textColor"
+        />
+
+    <android.support.v7.widget.RecyclerView
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:id="@+id/receivedRecycler"/>
 
 </LinearLayout>

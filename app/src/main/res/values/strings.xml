@@ -7,4 +7,5 @@
     <string name="send_activity_first_heading">My Device Name</string>
     <string name="send_activity_second_heading">Available Devices</string>
     <string name="receive_activity_second_heading">Current File Transfer</string>
+    <string name="receive_activity_third_heading">Received Files</string>
 </resources>

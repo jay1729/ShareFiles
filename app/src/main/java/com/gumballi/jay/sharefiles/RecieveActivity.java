@@ -14,10 +14,13 @@ import android.os.Environment;
 import android.os.Handler;
 import android.os.Looper;
 import android.os.StrictMode;
+import android.provider.MediaStore;
 import android.support.annotation.RequiresApi;
 import android.support.v4.content.FileProvider;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
+import android.support.v7.widget.LinearLayoutManager;
+import android.support.v7.widget.RecyclerView;
 import android.util.Log;
 import android.view.Menu;
 import android.view.MenuInflater;
@@ -68,6 +71,7 @@ public class RecieveActivity extends AppCompatActivity {
     public ProgressBar progressBar;
     public TextView fileName,date;
     public LinearLayout currentFile;
+    public RecyclerView filesRecyclerView;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -80,6 +84,12 @@ public class RecieveActivity extends AppCompatActivity {
         date=(TextView) findViewById(R.id.dateAndTime);
         progressBar.setVisibility(View.INVISIBLE);
         currentFile=(LinearLayout) findViewById(R.id.currentFile);
+        filesRecyclerView=(RecyclerView) findViewById(R.id.receivedRecycler);
+        File dir=new File(Environment.getExternalStorageDirectory()+"/"+getApplicationContext().getPackageName());
+        File[] receivedFiles=dir.listFiles();
+        FilesAdapter filesAdapter=new FilesAdapter(RecieveActivity.this,receivedFiles);
+        filesRecyclerView.setAdapter(filesAdapter);
+        filesRecyclerView.setLayoutManager(new LinearLayoutManager(RecieveActivity.this));
 
         Log.d("Reciever","first "+(serverSocket==null));
 
@@ -294,21 +304,7 @@ public class RecieveActivity extends AppCompatActivity {
             currentFile.setOnClickListener(new View.OnClickListener() {
                 @Override
                 public void onClick(View v) {
-                    Uri uri=FileProvider.getUriForFile(context,"com.gumballi.jay.sharefiles",file);
-
-                    Intent intent=new Intent(Intent.ACTION_VIEW);
-                    intent.addCategory(Intent.CATEGORY_BROWSABLE);
-                    intent.setFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP);
-                    intent.setDataAndType(uri,"*/*");
-                    intent.addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION);
-
-
-                    Log.d("Receiver uri",uri.toString());
-                    try{
-                        context.startActivity(intent);
-                    }catch (Exception e){
-                        e.printStackTrace();
-                    }
+                    FilesUtil.openFile(context,file);
                 }
             });
             Toast.makeText(context,"File Transferred!",Toast.LENGTH_LONG).show();
@@ -359,7 +355,7 @@ public class RecieveActivity extends AppCompatActivity {
                 public void run() {
                     try {
                         serverSocket.close();
-                    } catch (IOException e) {
+                    } catch (Exception e) {
                         e.printStackTrace();
                     }
                 }

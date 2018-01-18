@@ -171,7 +171,7 @@ public class PeersActivity extends AppCompatActivity {
                 try{
                     String fileName=PathUtil.getPath(getApplicationContext(),uri);
                     File file=new File(fileName);
-                    fileName=getFileName(fileName);
+                    fileName=FilesUtil.getFileName(fileName);
                     Log.d("File Path",fileName);
                     TransferData transferData=new TransferData(this,file,fileName,serverAddress);
                     transferData.execute();
@@ -234,17 +234,5 @@ public class PeersActivity extends AppCompatActivity {
         p2pManager.stopPeerDiscovery(channel,null);
         Log.d("Send Activity","onDestroy");
     }
-
-   public String getFileName(String fileName){
-       int len=fileName.length();
-       int start=len-1;
-       char[] temp=fileName.toCharArray();
-       while(true){
-           if(temp[start]=='/') break;
-           start--;
-           if(start==-1) break;
-       }
-       return fileName.substring(start+1);
-   }
 
 }
