@@ -2,7 +2,9 @@ package com.gumballi.jay.sharefiles;
 
 import android.app.AlertDialog;
 import android.content.Context;
+import android.content.Intent;
 import android.content.IntentFilter;
+import android.net.Uri;
 import android.net.wifi.p2p.WifiP2pConfig;
 import android.net.wifi.p2p.WifiP2pInfo;
 import android.net.wifi.p2p.WifiP2pManager;
@@ -13,6 +15,7 @@ import android.os.Handler;
 import android.os.Looper;
 import android.os.StrictMode;
 import android.support.annotation.RequiresApi;
+import android.support.v4.content.FileProvider;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
 import android.util.Log;
@@ -21,6 +24,7 @@ import android.view.MenuInflater;
 import android.view.MenuItem;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.LinearLayout;
 import android.widget.ProgressBar;
 import android.widget.TextView;
 import android.widget.Toast;
@@ -63,6 +67,7 @@ public class RecieveActivity extends AppCompatActivity {
     TextView deviceName;
     public ProgressBar progressBar;
     public TextView fileName,date;
+    public LinearLayout currentFile;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -73,6 +78,8 @@ public class RecieveActivity extends AppCompatActivity {
         progressBar=(ProgressBar)findViewById(R.id.receiveProgressBar);
         fileName=(TextView) findViewById(R.id.fileName);
         date=(TextView) findViewById(R.id.dateAndTime);
+        progressBar.setVisibility(View.INVISIBLE);
+        currentFile=(LinearLayout) findViewById(R.id.currentFile);
 
         Log.d("Reciever","first "+(serverSocket==null));
 
@@ -140,7 +147,7 @@ public class RecieveActivity extends AppCompatActivity {
                             Log.d("Reciever","Woah!");
                             return;
                         }
-                        fileServerAsyncTask=new FileServerAsyncTask((getApplicationContext()),(serverSocket),(progressBar),(fileName),date);
+                        fileServerAsyncTask=new FileServerAsyncTask((RecieveActivity.this),(serverSocket),(progressBar),(fileName),date,currentFile);
                         fileServerAsyncTask.execute();
                     }
 
@@ -186,13 +193,15 @@ public class RecieveActivity extends AppCompatActivity {
         private Long fileSize;
         private ProgressBar progressBar;
         private TextView fileNameTW,date;
+        private LinearLayout currentFile;
 
-        public FileServerAsyncTask(Context contextWeakReference,ServerSocket reference,ProgressBar progressBarWeakReference,TextView fileName,TextView date) {
+        public FileServerAsyncTask(Context contextWeakReference,ServerSocket reference,ProgressBar progressBarWeakReference,TextView fileName,TextView date,LinearLayout currentFile) {
             this.context = contextWeakReference;
             this.serverSocket=reference;
             this.progressBar=progressBarWeakReference;
             this.fileNameTW=fileName;
             this.date=date;
+            this.currentFile=currentFile;
         }
 
         public void recieveData(){
@@ -212,7 +221,7 @@ public class RecieveActivity extends AppCompatActivity {
                 ObjectInputStream inputStream=new ObjectInputStream(inputStream1);
                 fileName=inputStream.readUTF();
                 fileSize=inputStream.readLong();
-                file=new File(Environment.getExternalStorageDirectory()+"/"+context.getPackageName()+"/"+fileName);
+                file=new File(Environment.getExternalStorageDirectory()+"/"+context.getApplicationContext().getPackageName()+"/"+fileName);
                 Log.d("Reciever",file.getPath());
                 File dir=file.getParentFile();
                 if(!dir.exists()) dir.mkdirs();
@@ -270,6 +279,7 @@ public class RecieveActivity extends AppCompatActivity {
         @Override
         protected void onProgressUpdate(CustomObject... values) {
             super.onProgressUpdate(values);
+            if(progressBar.getVisibility()!=View.VISIBLE) progressBar.setVisibility(View.VISIBLE);
             if(fileNameTW.getText().equals("")) fileNameTW.setText(values[0].name);
             progressBar.setProgress((int)((values[0].totalProgress*100)/fileSize.longValue()));
         }
@@ -280,6 +290,27 @@ public class RecieveActivity extends AppCompatActivity {
             Calendar calendar=Calendar.getInstance();
             date.setText(calendar.getTime().toString());
             progressBar.setProgress(100);
+            currentFile.setClickable(true);
+            currentFile.setOnClickListener(new View.OnClickListener() {
+                @Override
+                public void onClick(View v) {
+                    Uri uri=FileProvider.getUriForFile(context,"com.gumballi.jay.sharefiles",file);
+
+                    Intent intent=new Intent(Intent.ACTION_VIEW);
+                    intent.addCategory(Intent.CATEGORY_BROWSABLE);
+                    intent.setFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP);
+                    intent.setDataAndType(uri,"*/*");
+                    intent.addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION);
+
+
+                    Log.d("Receiver uri",uri.toString());
+                    try{
+                        context.startActivity(intent);
+                    }catch (Exception e){
+                        e.printStackTrace();
+                    }
+                }
+            });
             Toast.makeText(context,"File Transferred!",Toast.LENGTH_LONG).show();
             Log.d("Reciever","onPostExecute");
             Log.d("Reciever",file.length()+" file size");

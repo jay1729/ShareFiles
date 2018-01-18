@@ -41,15 +41,18 @@
         android:textColor="@color/textColor"
         />
 
-    <View
-        android:layout_width="match_parent"
-        android:layout_height="15dp"/>
-
     <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:orientation="vertical"
-        android:gravity="left">
+        android:gravity="left"
+        android:id="@+id/currentFile"
+        android:clickable="true"
+        android:background="?attr/selectableItemBackground">
+
+        <View
+            android:layout_width="match_parent"
+            android:layout_height="15dp"/>
 
     <TextView
         android:layout_width="match_parent"
